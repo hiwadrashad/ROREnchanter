@@ -1,555 +1,539 @@
-program Fletcher;
-{$DEFINE SMART}
-{$i AeroLib/AeroLib.Simba}
-
+program new;
+{$define SMART}
+{$I SRL/osr.simba}
+{$I RSWalker/Walker.simba}
+//{$I Reflection/Reflection.simba}
 var
-  x, y, failCount, bowsMade, xp: Integer;
-  DTM_longBowU, DTM_1st, DTM_2nd: Integer;
-  breakAfterTime, breakLength: Integer;
+RSW : TRSWalker;
+path, TPA: TPointArray;
+x, y : Integer;
+DTM_RingOfRecoil, DTM_LoginExistingUser, DTM_Login, DTM_WorldMap, DTM_SaphireRing, DTM_CosmicRune,DTM_BankFirstTab, DTM_ActiveMageTab, DTM_ActiveInvTab, DTM_CastleWarsRing: Integer;
+ATPA: T2DPointArray;
+NeedMoreItems : Boolean;
+SA : Array[0..3] of byte;
+CastleWarsBankColor: integer;
+GE : TGrandExchStub;
+ GeInterfaceColor : TCTS2Color;
+Compass : TRSMinimap;
+Player : Tplayer;
+TSRLI : TSRL;
+breakAfterTime, breakLength: Integer;
+
+
 
 const
-  P_USERNAME = '';
-  P_PASSWORD = '';
-  P_PIN = '';
 
-  LOG = 'maple'; {oak, willow, maple, yew, magic}
-  MODE = 'string';  {cut, string}
+P_USERNAME := 'hiwadrashad1@gmail.com';
+P_PASSWORD := 'Groothoofd3';
+P_PIN := '';
+USEBREAKS := true;
+breakAfterHours_MIN := 2;
+breakAfterHours_MAX := 3;  {breaks after random (MIN, MAX) hours}
+breakForMinutes_MIN := 15;
+breakForMinutes_MAX := 30; {for random (MIN, MAX) minutes}
+BuyingAmountOfRingsAtGE :=  '10';
+LOGIN_WORLD := 515;
+UseSmart := False;
 
-  USEBREAKS = true;
-  breakAfterHours_MIN = 2;
-  breakAfterHours_MAX = 3;  {breaks after random (MIN, MAX) hours}
-  breakForMinutes_MIN = 30;
-  breakForMinutes_MAX = 90; {for random (MIN, MAX) minutes}
 
-  VERSION = '3';
+{ const MSX1, MSY1, MSX2, MSY2;
+  Description: Main Screen EdgePoints. }
+const
+  MSX1 = 4;
+  MSY1 = 4;
+  MSX2 = 515;
+  MSY2 = 337;
 
-procedure declarePlayer();
+{ Fullscreen coordinates}
+const
+FSX1 = 0;
+FSY1 = 0;
+FSX2 = 763;
+FSY2 = 501;
+
+  { const MIX1, MIY1, MIX2, MIY2;
+  Description: Inventory EdgePoints. }
+const
+  MIX1 = 547;
+  MIY1 = 204;
+  MIX2 = 736;
+  MIY2 = 465;
+
+  { const MCX1, MCY1, MCX2, MCY2;
+  Description: Chat Screen EdgePoints. }
+const
+  MCX1 = 7;
+  MCY1 = 345;
+  MCX2 = 512;
+  MCY2 = 473;
+
+procedure declarePlayers();
 begin
-  Me.Name := P_USERNAME;
-  Me.Pass := P_PASSWORD;
-  Me.Pin := P_PIN;
-  Me.Active := True;
-  Me.Member := True;
+Player.LoginName := P_USERNAME;
+Player.PassWord := P_PASSWORD;
+Player.IsMember := True;
+Player.World := LOGIN_WORLD;
 end;
+
+function IsLoggedIn(): Boolean;
+begin
+ if (findDTM(DTM_WorldMap, x, y, 705, 115, 744, 145)) then
+ begin
+ exit(True);
+ end
+ else
+ begin
+ exit(False);
+ end
+end
 
 procedure free;
 begin
-  freeDTM(DTM_longBowU);
-  if (MODE = 'cut') then
-    freeDTM(DTM_1st);
-  freeDTM(DTM_2nd);
+freeDTM(DTM_RingOfRecoil);
+freeDTM(DTM_SaphireRing);
+freeDTM(DTM_CosmicRune);
+freeDTM(DTM_BankFirstTab);
+freeDTM(DTM_ActiveMageTab);
+freeDTM(DTM_ActiveInvTab);
+freeDTM(DTM_CastleWarsRing);
+end;
+
+procedure antiban();
+var
+TSRLV : TSRL;
+TRSV : TRSStats;
+TRSMV :  TRSMinimap;
+begin
+begin
+ SA[0] := 0;
+ SA[1] := 1;
+ SA[2] := 2;
+ SA[3] := 3;
+end
+    case random(0, 60) of
+    0..35:
+        TSRLV.MouseOffClient(SA[random(0,3)]);
+    41..45:
+    begin
+    TRSV.HoverSkill(SKILL_MAGIC,random(1000,3000), True);
+    end
+    46..60:
+    begin
+    TRSMV.SetCompassAngle(random(-200,180));
+    end
+    end;
+end;
+
+
+procedure customMouseNoClick(pointcoordinate: TPoint);
+begin
+sleep(random(100,200))
+case random(0, 5) of
+    0..1:
+    begin
+    mouse.Miss(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+    2..6:
+    begin
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+  end
+end;
+
+procedure customMouseLeft(pointcoordinate: TPoint);
+begin
+sleep(random(100,200))
+case random(0, 5) of
+    0..1:
+    begin
+    mouse.Miss(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+    2..6:
+    begin
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+  end
+sleep(random(100,200));
+mouse.Click(1);
+end;
+
+procedure customMouseRight(pointcoordinate: TPoint);
+begin
+sleep(random(100,200))
+case random(0, 5) of
+    0..1:
+    begin
+    mouse.Miss(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+    2..6:
+    begin
+    mouse.Move(point(pointcoordinate.X + (random(-5,5)),pointcoordinate.Y + random(-5,5)));
+    end
+  end
+sleep(random(100,200));
+mouse.Click(0);
+end;
+
+procedure clickMenuOption(upText: String);
+begin
+sleep(random(100,200));
+chooseoption.Select(upText);
+end
+
+Procedure typeSend(Text: String; Send: Boolean = True);
+var
+  I: Integer;
+begin
+  for I := 1 to Length(Text) do
+  begin
+    sendKeys(Text[i], 40+Random(40), 15+Random(30));
+    Wait(20 + Random(40));
+  end;
+
+  if Send then
+  begin
+    if (UseSmart) then
+
+    begin
+    KeyDown(10);
+    wait(RandomRange(50, 100));
+    KeyUp(10);
+    end
+    else
+    begin
+      pressKey(VK_ENTER);
+    end
+  end
+end;
+
+
+procedure LogOutAccount();
+begin
+customMouseLeft(point(642,484));
+customMouseLeft(point(640,430));
+sleep(random(1000,2000));
+end;
+
+procedure LogoutAndTerminate();
+begin
+LogOutAccount();
+sleep(random(300,600));
+Terminatescript();
+end;
+
+procedure Login();
+begin
+Player.Login();
+sleep(random(1000,4000));
+customMouseLeft(point(400,335));
+sleep(random(400,800));
+mainscreen.SetAngle(True);
+end;
+
+
+procedure AFKSimulator();
+var
+TSRLV: TSRL;
+begin
+ if (random(0,2) = 0) then
+ begin
+ customMouseNoClick(point((random(0,760)),(random(0,500))));
+ end
+ else
+ begin
+ SA[0] := 0;
+ SA[1] := 1;
+ SA[2] := 2;
+ SA[3] := 3;
+ TSRLV.MouseOffClient(SA[random(0,3)]);
+ end
+end;
+
+
+
+procedure OpenBank();
+var
+  TPA : TPointArray;
+  TPTA: Integer;
+  ATPA: T2DPointArray;
+  limitHit: Boolean;
+  X: Integer;
+begin
+if (SRL.FindColors(TPA,CTS2(CastleWarsBankColor, 100, 0.01, 0.01), MainScreen.GetBounds) > 0) then
+begin
+  begin
+  SRL.FindColors(TPA,CTS2(CastleWarsBankColor, 100, 0.01, 0.01), MainScreen.GetBounds);
+  X := X + 1;
+  ATPA := TPA.Cluster(2);
+  ATPA.FilterSize(100,500);
+  ATPA.SortByIndex(MainScreen.GetMiddle);
+  //writeln(Length(ATPA[0]));
+  TPTA := Random(0,Length(ATPA[0]));
+  customMouseLeft(point(ATPA[0][TPTA].X,ATPA[0][TPTA].Y));
+  sleep(random(800,1300))
+  end
+end
+end;
+
+
+
+procedure WithdrawBank();
+var
+InvCoord : Integer;
+Deposited : Boolean;
+begin
+ if (findDTM(DTM_BankFirstTab, x, y, MSX1, MSY1, MSX2, MSY2)) then
+ begin
+ customMouseLeft(point(122,57));
+ end
+if (findDTM(DTM_RingOfRecoil, x, y, MIX1,MIY1,MIX2,MIY2)) then
+begin
+repeat
+begin
+InvCoord := random(1,27);
+if (FindDTM(DTM_RingOfRecoil, x, y, inventory.GetSlotBox(InvCoord).X1, inventory.GetSlotBox(InvCoord).Y1, inventory.GetSlotBox(InvCoord).X2, inventory.GetSlotBox(InvCoord).Y2)) then
+begin
+customMouseRight(point(x,y));
+clickMenuOption('Deposit-All');
+Deposited := True;
+end
+end
+until (Deposited = True)
+end
+Deposited := False;
+sleep(random(300,600));
+if (findDTM(DTM_SaphireRing, x, y, MSX1, MSY1, MSX2, MSY2)) then
+ begin
+ customMouseRight(point(x,y));
+   begin
+   clickMenuOption('Withdraw-All');
+   sleep(random(600,800));
+   end
+   if ( not (findDTM(DTM_SaphireRing, x, y, MSX1, MSY1, MSX2, MSY2))) then
+   begin
+   NeedMoreItems := True;
+   writeln('you need more items!');
+   end
+   customMouseLeft(point(487,22));
+   sleep(random(300,600));
+ end
+ else
+ begin
+ customMouseLeft(point(487,22));
+ end
+end;
+
+procedure EnchantSubRoutine();
+var
+I,XI : integer;
+InvIndex: Integer;
+TT : TTimeMarker;
+begin
+//replace this back to(0,1)
+if (random(0,1) = 0) then
+begin
+InvIndex := (random(2,28));
+if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(InvIndex).X1, inventory.GetSlotBox(InvIndex).Y1, inventory.GetSlotBox(InvIndex).X2, inventory.GetSlotBox(InvIndex).Y2)) then
+begin
+  customMouseLeft(point(741,182));
+  customMouseLeft(point(693,216));
+  customMouseLeft(point(x, y));
+  sleep(random(1000,1500));
+  customMouseLeft(point(643,185));
+  sleep(random(100,300));
+  AFKSimulator();
+   begin
+   for XI := 1 to 28 do
+ begin
+ begin
+ if(not(findDTM(DTM_ActiveInvTab, x, y, 517,163,673,207))) then
+ begin
+ customMouseLeft(point(644,185));
+ AFKSimulator();
+ end
+ end
+ if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(XI).X1, inventory.GetSlotBox(XI).Y1, inventory.GetSlotBox(XI).X2, inventory.GetSlotBox(XI).Y2)) then
+  begin
+  sleep(5000);
+  if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(XI).X1, inventory.GetSlotBox(XI).Y1, inventory.GetSlotBox(XI).X2, inventory.GetSlotBox(XI).Y2)) then
+   begin
+   EnchantSubRoutine();
+   end
+  end
+  end
+ end
+end
+else
+begin
+EnchantSubRoutine();
+end
+end
+else
+begin
+for I := 1 to 28 do
+ begin
+  if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(I).X1, inventory.GetSlotBox(I).Y1, inventory.GetSlotBox(I).X2, inventory.GetSlotBox(I).Y2)) then
+  begin
+  customMouseLeft(point(741,182));
+  customMouseLeft(point(693,216));
+  customMouseLeft(point(x, y));
+  sleep(random(200,300));
+  customMouseLeft(point(643,185));
+  sleep(random(100,300));
+  AFKSimulator();
+  break();
+  end
+ end
+
+   begin
+   for XI := 1 to 28 do
+ begin
+ begin
+ if(not(findDTM(DTM_ActiveInvTab, x, y, 517,163,673,207))) then
+ begin
+ customMouseLeft(point(644,185));
+ AFKSimulator();
+ end
+ end
+ if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(XI).X1, inventory.GetSlotBox(XI).Y1, inventory.GetSlotBox(XI).X2, inventory.GetSlotBox(XI).Y2)) then
+  begin
+  sleep(5000);
+  if (FindDTM(DTM_SaphireRing, x, y, inventory.GetSlotBox(XI).X1, inventory.GetSlotBox(XI).Y1, inventory.GetSlotBox(XI).X2, inventory.GetSlotBox(XI).Y2)) then
+   begin
+   EnchantSubRoutine();
+   end
+  end
+  end
+ end
+end
+end;
+
+procedure EnchantMainRoutine();
+var
+TPa : TPointArray;
+I,X : Integer;
+TT : TTimeMarker;
+TP : TPoint;
+begin
+if(findDTM(DTM_SaphireRing, x, y, MIX1,MIY1,MIX2,MIY2)) then
+ begin
+ EnchantSubRoutine();
+ end
 end;
 
 procedure randomBreakTime();
+var
+TSRLV : TSRL;
 begin
   breakAfterTime := GetTimeRunning + (RandomRange(breakAfterHours_MIN, breakAfterHours_MAX) * 3600000) + RandomRange(2000, 3500000);
-  Writeln('breakAfterTime = ' + MsToTime(breakAfterTime, 3));
+  Writeln('breakAfterTime = ' + TSRLV.MsToTime(breakAfterTime, Time_Bare));
   breakLength := (RandomRange(breakForMinutes_MIN, breakForMinutes_MAX) * 60000) + RandomRange(2000, 59000);
-  Writeln('breakLength = ' + MsToTime(breakLength, 3));
+  Writeln('breakLength = ' + TSRLV.MsToTime(breakLength, Time_Bare));
 end;
 
 procedure breakHandlerCustom();
+var
+TSRLV : TSRL;
 begin
 writeln('starting breakhandler');
-  while (isLoggedIn) do
-    logoutPlayer;
+  while (IsLoggedIn()) do
+  begin
+  LogOutAccount();
+  end
   while not (getTimeRunning >= (breakAfterTime + breakLength)) do
   begin
     Writeln('Break handler active');
-    Writeln('TimeRunning: ' + MsToTime(getTimeRunning, 3));
-    Writeln('Breaking till: ' + MsToTime((breakAfterTime + breakLength), 3));
-    Writeln('Time left until break is done: ' + MsToTime(((breakAfterTime + breakLength) - getTimeRunning), 3));
+    Writeln('TimeRunning: ' + TSRLV.MsToTime(getTimeRunning, Time_Bare));
+    Writeln('Breaking till: ' + TSRLV.MsToTime((breakAfterTime + breakLength), Time_Bare));
+    Writeln('Time left until break is done: ' + TSRLV.MsToTime(((breakAfterTime + breakLength) - getTimeRunning), Time_Bare));
     Sleep(5000);
     ClearDebug;
   end;
   randomBreakTime;
 end;
 
-procedure setupPlayer();
-begin
-  writeln('player setup...');
-  if (not isLoggedIn()) then
-    loginPlayer(false);
-  if (isLoggedIn()) then
-  begin
-    toggleRunning(true);
-    setAngle(ANGLE_HIGH);
-  end;
-end;
-
 procedure setup();
 begin
-  mouseSpeed := Random(18, 25);
-  writeln('mouseSpeed set at: ' + intToStr(mouseSpeed));
-  {1st = log, 2nd knife or bs}
-  case LOG of
-  'oak':
-   begin
-    if (mode = 'cut') then
-      DTM_1st := DTMFromString('mggAAAHicY2NgYKhhZmAoBuIWIM4G4nYgrgJiTyYGhhAgDgBiPyD2AOJgIC6JNAXqYsTA7AzYAaZKCIYAAFa7Be4=');
-    DTM_longBowU := DTMFromString('mggAAAHicY2NgYAhmZmAIA+IoII6Gsv2AeBsjA8MuID4KxIeAeC8QbwbifbPEGHqKBIA6GVEwO5AEYXTAiANDAABMoQkc');
-    xp := 25;
-   end;
-    'willow':
-      begin
-        if (mode = 'cut') then
-          DTM_1st := DTMFromString('mbQAAAHicY2VgYPBkZGDwAOIgILYE4nAgfgAUfwXEz4H4KQOE7+EgASQZUTA7AyZgxILBAAATEQak');
-        DTM_longBowU := DTMFromString('mWAAAAHicY2FgYPBmZGAIBuIAIHYD4kSgWAEQZwBxHBBvXOEAJBnhmJ0BFTCiYRAAABdJBHs=');
-        xp := 42;
-      end;
-    'maple':
-    begin
-      if (MODE = 'cut') then
-        DTM_1st := DTMFromString('mggAAAHicY2NgYHgOxE+A+BYQvwfit0B8BYgrgbgBiOuBuBaIi4G4HIizPXiBJCMGFmHADjBVQjAEAAC3NQka');
-      DTM_longBowU := DTMFromString('mWAAAAHicY2FgYLjLzMDwBIgfQGkjRgYGRyA2B2IbIN63ZDZQFSMcszOgAkY0DAIAt4MGiw==');
-      xp := 58;
-    end;
-    'yew':
-      begin
-        if (MODE = 'cut') then
-          DTM_1st := DTMFromString('mlwAAAHicY2dgYKhkZGCoAeJWIM4E4hIgbgPiHCCeA5RfAsSzgHgeEC8H4oVAPBOI/W04gCQjVszFgBtg1wHBUAAAzqcIWw==');
-        DTM_longBowU := DTMFromString('mlwAAAHicY2dgYHBlYmCwAWJHIPYEYl8o7QTEj4DyN4D4ARC/AuKPQPwMiG8D8b5lYkCSESvmYsANsOuAYCgAAC0gCcA=');
-        xp := 75;
-      end;
-     'magic':
-      begin
-        if (MODE = 'cut') then
-          DTM_1st := DTMFromString('mggAAAHicY2NgYNBkZmCQZobQckBsDMSmQHyPkYHhARA/h+InQHwXiPNTbRk0l84A6mREwexAEoTRASMODAEAHvkI7g==');
-        DTM_longBowU := DTMFromString('mbQAAAHicY2VgYFBmYWBQA2ItINYEYj0gvsnIwHAXiJ8D8X0gfgnECl31DALOtkAdjHDMDiRBGBkwYsFgAAAYYwcd');
-        xp := 92;
-      end;
-  end;
+ // Aerolib dependant objects
+ // tCol.create(2042682, 40, 0.01, 0.01);// duel arena
+ // tCol.create(605521, 10, 0.01, 0.01);//  edgeville
+ // al kharid pass tCol.create(1647407, 50, 0.01, 0.01);
+ // castle wars
+ // TMS.create('Chest', ['Use Bank chest', 'Bank chest'],[createCol(5921377, 100, 0.01, 0.01)],[createCol(1976375, 100, 0.01, 0.01)]);
 
-  if (MODE = 'cut') then
-    DTM_2nd := DTMFromString('mlwAAAHicY2dgYHjAzMBwA4gfA/FzIH4ExLeA+DoQOzEyMAQCsSMQmwOxBRC7AbEPEOelpQF1M2LF/Ay4AXYdEAwFAIDWCWQ=')
-  else
-  begin
-    DTM_1st := DTM_longBowU;
-    DTM_2nd := DTMFromString('mWAAAAHicY2FgYHgJxJ+B+B4Q3wbiYCAOgdKxQNxcHgkkGeFYhAEVMKJhEAAAs7wGXw==');
-  end;
-  addOnTerminate('free');
-  randomBreakTime();
-  setupPlayer();
-end;
-
-procedure stats_check;
-begin
-  if (STATS_ID = '') then
-  begin
-    writeln('You MUST have a stats account registered to use this script');
-    writeln('You can register for free here: http://stats.grats.pw/reg.php');
-    writeln('More information about stats here: https://villavu.com/forum/showthread.php?t=112103&p=1332139');
-    TerminateScript;
-  end;
-end;
-
-procedure updater();
-var
-  NewFile: integer;
-  OnlineVersion, NewScript, NewFileName: string;
-begin
-  writeln('Checking for script updates...');
-  OnlineVersion := GetPage('http://pastebin.com/raw.php?i=KEDqiLid');
-  if (trim(OnlineVersion) > VERSION) then
-  begin
-    writeLn('Script update available!');
-    writeLn('Updating script to v' + OnlineVersion);
-    NewScript := GetPage('http://pastebin.com/raw.php?i=gktWX9u8');
-    NewFileName := 'C:\Simba\Scripts\' + 'HoodzFletcher Aero V' + Trim(OnlineVersion) + '.simba';
-    NewFile := Rewritefile(NewFileName, true);
-    try
-      WriteFileString(NewFile, NewScript);
-    except
-      begin
-        writeLn('Fatal error writing to ' + NewFileName + '!!');
-        terminatescript;
-      end;
-    end;
-    CloseFile(NewFile);
-    writeLn('New script downloaded to ' + NewFileName + '. Please restart Simba.');
-    TerminateScript;
-  end
-  else
-    writeLn('You have the latest version of the script!');
-end;
-
-procedure customMouse(point: TPoint);
-begin
-  case random(0, 6) of
-    0..2: BrakeMMouse(point, random(5), random(5), true);
-    3: BrakeMMouse(point, random(5), random(5), false);
-    4..5: MissMouse(point, random(5), random(5));
-    6: HumanMMouse(point, random(5), random(5));
-  end;
-end;
-
-function waitForPixelShift(amount, timeOut: Integer; box: TBox): Boolean;
-var
-  x1, y1, BMP, BMP2, tempShift: Integer;
-  t: Timer;
-begin
-  result := false;
-  t.start();
-  BMP := bitmapFromClient(box.x1, box.y1, box.x2, box.y2);
-  repeat
-    if (t.timeElapsed() >= timeOut) then
-      break;
-    sleep(250);
-    BMP2 := bitmapFromClient(box.x1, box.y1, box.x2, box.y2);
-    tempShift := calculatePixelShift(BMP, BMP2, IntToBox(0,0,(box.x2 - box.x1),(box.y2-box.y1)));
-    if (calculatePixelShift(BMP, BMP2, IntToBox(0,0,(box.x2 - box.x1),(box.y2-box.y1))) >= amount) then
-      result := true;
-    freeBitmap(BMP2);
-  until (Result);
-{  if (Result) then
-    writeln(toStr(tempShift) + ' pixels (amount: ' + toStr(amount) + ') changed after: ' + toString(t.timeElapsed()) + '  result: true')
-  else
-    writeln('less than ' + toString(amount) + ' pixels changed after: ' + toStr(timeOut) + ' (timeout)    result: false');
-}  freeBitmap(BMP);
-end;
-
-function getLocations(DTM, slots: Integer): TIntegerArray;
-var
-  I: Integer;
-  tempArray: TIntegerArray;
-begin
-  setLength(tempArray, 0);
-  for I := 1 to slots do
-  begin
-   if (FindDTM(DTM, x, y, invBox(I).x1, invBox(I).y1, invBox(I).x2, invBox(I).y2)) then
-   begin
-    SetLength(tempArray, Length(tempArray) + 1);
-    tempArray[High(tempArray)] := I;
-   end;
-  end;
-  result := tempArray;
-end;
-
-function textVisible(): Boolean;
-var
-  t: Timer;
-  numb: Integer;
-begin
-  result := false;
-  numb := random(2000, 3000);
-  t.start();
-  repeat
-  if (t.timeElapsed() > numb) then
-    break;
-  sleep(random(320, 600));
-  if (countColor(0, 211, 392, 307, 411) = 277) then
-    result := true;
-  until (result);
-end;
-
-procedure fletchHandler();
-var
-  randomNumb, count, I: Integer;
-  ARRAY_DTMs, ARRAY_locs: TIntegerArray;
-  mousePoint: TPoint;
-begin
-  if (MODE = 'cut') then
-    ARRAY_DTMs := [DTM_1st, DTM_2nd]
-  else
-    ARRAY_DTMs := [DTM_longBowU, DTM_2nd];
-  randomNumb := random(0, 1);
-  repeat
-    ARRAY_locs := getLocations(ARRAY_DTMs[randomNumb], 28);
-    if (length(ARRAY_locs) = 0) then
-      exit;
-    for I := 0 to high(ARRAY_locs) do
-    begin
-      writeln(mode + '  randomNumb: ' + toStr(randomNumb) + '  count: ' + toStr(countColor(clOutline_black, invBox(ARRAY_locs[I]).X1, invBox(ARRAY_locs[I]).Y1, invBox(ARRAY_locs[I]).X2, invBox(ARRAY_locs[I]).Y2)));
-      if (MODE = 'string') and (randomNumb = 0) and (countColor(clOutline_black, invBox(ARRAY_locs[I]).X1, invBox(ARRAY_locs[I]).Y1, invBox(ARRAY_locs[I]).X2, invBox(ARRAY_locs[I]).Y2) = 106) then
-        continue;
-      mousePoint := MiddleBox(invBox(ARRAY_locs[I]));
-      customMouse(mousePoint);
-      sleep(random(20, 100));
-      if (isUpText('epo')) then
-        exit;
-      case random(0, 12) of
-        0..11: fastClick(MOUSE_LEFT);
-        12:
-        begin
-          fastClick(MOUSE_RIGHT);
-          waitOption('Use', 300);
-        end;
-      end;
-      sleep(random(30, 100));
-      break;
-    end;
-    if (randomNumb > 0) then
-      randomNumb := 0
-    else
-      randomNumb := 1;
-    inc(count);
-  until (count = 2);
-  customMouse(point(260 + random(-22, 22), 400 + random(-17, 30)));
-  if (waitUptext('ake', 670)) then
-  begin
-    fastClick(MOUSE_RIGHT);
-    if (MODE = 'cut') then
-    begin
-      waitOption('Make X', 300);
-      if (textVisible()) then
-        typeSend(toStr(random(28, 99)), true);
-    end else
-      waitOption('Make All', 300);
-  end else
-  begin
-    inc(failCount);
-    if (failCount > 3) then
-    begin
-      compassMovement(-30, 30, false);
-      failCount := 0;
-    end;
-  end;
-end;
-
-procedure antiban();
-begin
-  if (random(0, 20) = 0) then
-    case random(0, 50) of
-    0..35:
-        if (pointInBox(getMousePnt(), intToBox(1, 1, 765, 500))) then
-          MMouseOffClient('random');
-    41..45: hoverSkill(SKILL_FLETCHING, false);
-    46..50: pickUpMouse;
-    end;
-end;
-
-procedure terminate(reason: string);
-begin
-  writeln('**TERMINATING** reason: ' + reason);
-  closeInterface;
-  logoutPlayer;
-  terminateScript;
-end;
-
-procedure incVars();
-var
-  totalXP: Integer;
-begin
-  if (MODE = 'cut') then
-    totalXP := round(27 * xp)
-  else
-    totalXP := round(14 * xp);
-  stats_incVariable('65', totalXP);
-end;
-
-procedure openBank();
-var
-  TPA: TPointArray;
-  ATPA: T2DPointArray;
-  I: Integer;
-  spot, firstInv: TPoint;
-  t: Timer;
-  tCol : TColEx;
-begin
-  if (anySlotActivated()) then
-  begin
-    firstInv := invBox(1).MidPoint;
-    customMouse(Point(firstInv.x + RandomRange(-5, 5), firstInv.y + RandomRange(-5, 5)));
-    fastClick(MOUSE_LEFT);
-    sleep(random(150, 350));
-    exit;
-  end;
-  if (Interfaces[PINSCREEN].isVisible()) then
-    inPin(P_PIN);
-  if (isBankOpen()) then
-    exit;
-  tCol.create(3425887, 21, 0.04, 0.09);
-  if (not tCol.findAllIn(AREA_MS, TPA)) then
-    exit;
-  ATPA := FloodFillTPA(TPA);
-  if (length(ATPA) <= 0) then
-    exit;
-  SortATPAfromFirstPoint(ATPA, Point(275, 155));
-  for I := 0 to high(ATPA) do
-  begin
-    if (length(ATPA[I]) < 36) then
-      continue;
-    spot := middleTPA(ATPA[I]);
-    customMouse(spot);
-    if (waitUptextMulti(['ank', 'ast'], 300)) then
-    begin
-      fastClick(MOUSE_LEFT);
-      break;
-    end;
-  end;
-  t.start();
-  while ((not isBankOpen()) and (not Interfaces[PINSCREEN].isVisible())) and (t.TimeElapsed() < 3000) do
-    sleep(random(150, 250));
-  incVars();
-end;
-
-procedure bankHandler();
-var
-  locs, ARRAY_DTMs: TIntegerArray;
-  I, randomNumb, count: Integer;
-begin
-  if (not isBankOpen()) and (not Interfaces[PINSCREEN].isVisible() ) then
-    exit;
-  if (Interfaces[PINSCREEN].isVisible()) then
-    inPin(P_PIN);
-  if (mode = 'cut') then
-  begin
-   locs := getLocations(DTM_longbowU, 14);
-   if (length(locs) < 1) then
-    begin
-     SetLength(locs, Length(locs) + 1);
-     locs[High(locs)] := 1;
-    end;
-   I := random(locs[0], locs[high(locs)]);
-   if (findDTM(DTM_longBowU, x, y, invBox(I).X1, invBox(I).Y1, invBox(I).X2, invBox(I).Y2)) then
-   begin
-    customMouse(point(x, y));
-    sleep(random(20, 100));
-    fastClick(MOUSE_RIGHT);
-    waitOption('Deposit-All', 300);
-   end;
-  end else
-  begin
-    case random(0, 10) of
-      0..9: quickDeposit('inv');
-      10:
-        begin
-          locs := getLocations(DTM_longbowU, 14);
-          if (length(locs) < 1) then
-            begin
-             SetLength(locs, Length(locs) + 1);
-             locs[High(locs)] := 1;
-            end;
-          I := random(locs[0], locs[high(locs)]);
-          if (findDTM(DTM_longBowU, x, y, invBox(I).X1, invBox(I).Y1, invBox(I).X2, invBox(I).Y2)) then
-          begin
-            customMouse(point(x, y));
-            sleep(random(20, 100));
-            fastClick(MOUSE_RIGHT);
-            waitOption('Deposit-All', 300);
-          end;
-        end;
-    end;
-  end;
-  if (MODE = 'cut') then
-  begin
-    if (findDTM(DTM_1st, x, y, MSX1, MSY1, MSX2, MSY2)) then
-    begin
-      customMouse(point(x, y));
-      sleep(random(20, 100));
-      fastClick(MOUSE_RIGHT);
-      if (random(0, 1) = 0) then
-        waitOption('Withdraw-All ', 300)
-      else
-        waitOption('Withdraw-All-but-1', 300);
-    end;
-  end else
-  begin
-    ARRAY_DTMs := [DTM_longBowU, DTM_2nd];
-    randomNumb := random(0, 1);
-    repeat
-    if (findDTM(ARRAY_DTMs[randomNumb], x, y, MSX1, MSY1, MSX2, MSY2)) then
-    begin
-      customMouse(point(x, y));
-      sleep(random(20, 100));
-      fastClick(MOUSE_RIGHT);
-      waitOption('Withdraw-14', 300);
-      sleep(RandomRange(200, 350));
-    end;
-    if (randomNumb > 0) then
-      randomNumb := 0
-    else
-      randomNumb := 1;
-    inc(count);
-  until (count = 2);
-  end;
-  closeInterface();
-  fletchHandler();
-end;
-
-procedure recoverKnife();
-begin
-  if (not isBankOpen()) then
-    openBank();
-  if (isBankOpen()) then
-  begin
-    if (getInvCount() > 1) then
-      quickDeposit('inv');
-    if (getInvCount() = 0) then
-    begin
-      if (FindDTM(DTM_2nd, x, y, MSX1, MSY1, MSX2, MSY2)) then
-      begin
-        customMouse(Point(x, y));
-        sleep(random(20, 50));
-        fastClick(MOUSE_LEFT);
-        sleep(2500 + random(500));
-      end;
-    end;
-  end;
-end;
-
-procedure progress();
-var
-  bowsHour, xpGained, xpHour: Integer;
-begin
-  clearDebug;
-  bowsHour := Round((bowsMade) / (GetTimeRunning / 3600000.0));
-  xpGained := (xp * bowsMade);
-  xpHour := Round((xpGained) / (GetTimeRunning / 3600000.0));
-  writeln('Time running: ' + MsToTime(GetTimeRunning, 3));
-  writeln('Bows made: ' + toStr(bowsMade) + '   (' + toStr(bowsHour) + ' p/h)');
-  writeln('Xp gained: ' + toStr(xpGained) + '   (' + toStr(xpHour) + ' p/h)');
+DTM_CastleWarsRing := DTMFromString('mQwAAAHicY2ZgYJjGxMAwBYjnAPETIP81ED8E4ken1cFYeo4CAx4AAIegCP8=');
+DTM_RingOfRecoil := DTMFromString('mQwAAAHicY2ZgYMhlYmDIBuIiIH4C5L8F4odA/PKiOsP1g8oM0gqLGfAAAGpZCIA=');
+DTM_SaphireRing  := DTMFromString('mQwAAAHicY2ZgYOgC4m4gbgXiRCDOAuI4IP75QIvh9WUtBmWt4wx4AABExgfG');
+DTM_CosmicRune := DTMFromString('mWAAAAHicY2FgYJjExMAwHYhnA/E8IH4KFHsOxC+h+OljdYYZE/rB9MLp0xmIAQDsZQ1x=');
+DTM_BankFirstTab := DTMFromString('mQwAAAHicY2ZgYAgA4hggdgZiGyD2BmIPIM6O82bwsDMGYzwAALWoBEg=');
+DTM_ActiveMageTab := DTMFromString('mQwAAAHicY2ZgYHjGxMBwD4jfAvF2IH8jEB8G4lk5JgylGnIMNqICDHgAAFqUBzw=');
+DTM_ActiveInvTab := DTMFromString('mQwAAAHicY2ZgYGhhYmCoAOIeIN4B5K8H4hNAXOUhwVCqIcegzMPFgAcAAAPCBY8=');
+DTM_WorldMap := DTMFromString('mQwAAAHicY2ZgYLjOxMBwE4jvAHErkF8PxG1A3HP1JUN3XwCDgaMoAxcDBMBoJAAAeWAIbQ==');
+CastleWarsBankColor := 3951971;
+declarePlayers();
+randomBreakTime();
 end;
 
 function getState(): Integer;
 begin
-  if (getTimeRunning >= breakAfterTime) and (USEBREAKS) then
-    exit(8);
-  if (not isLoggedIn()) then
-    exit(0);
-  if ((getCurrentTab <> TAB_INV) and (not isBankOpen())) then
-    exit(1);
-  if ((not FindDTM(DTM_2nd, x, y, MIX1, MIY1, MIX2, MIY2)) and (MODE = 'cut')) then
-    exit(7);
-  if ((not FindDTM(DTM_1st, x, y, MIX1, MIY1, MIX2, MIY2)) or (not FindDTM(DTM_2nd, x, y, MIX1, MIY1, MIX2, MIY2))) and (not isBankOpen()) then
-    exit(5);
-  if ((not FindDTM(DTM_1st, x, y, MIX1, MIY1, MIX2, MIY2)) or (not FindDTM(DTM_2nd, x, y, MIX1, MIY1, MIX2, MIY2))) and (isBankOpen()) then
-    exit(6);
-  if (FindDTM(DTM_1st, x, y, MIX1, MIY1, MIX2, MIY2) and (FindDTM(DTM_2nd, x, y, MIX1, MIY1, MIX2, MIY2)) and (isBankOpen())) then
-    exit(2);
-  if (FindDTM(DTM_1st, x, y, MIX1, MIY1, MIX2, MIY2) and (FindDTM(DTM_2nd, x, y, MIX1, MIY1, MIX2, MIY2)) and (not isBankOpen()) and (not waitForPixelShift(10, 2500, intToBox(MIX1, MIY1, MIX2, MIY2)))) then
-    exit(3);
-  inc(bowsMade);
-  exit(4);
+//LogoutWhenOutOfItems
+if (NeedMoreItems) then
+begin
+exit(6);
+end
+// breakhandler
+if (GetTimeRunning >= breakAfterTime) then
+begin
+exit(0);
+end
+// Loginhandler
+if (not isLoggedIn()) then
+begin
+exit(1);
+end
+//antiban
+if ((random(0, 2) = 0) and (not (bankscreen.IsOpen()))) then
+begin
+exit(2);
+end
+//enchatmainroutine
+if ((findDTM(DTM_SaphireRing, x, y, MIX1,MIY1,MIX2,MIY2)) and (findDTM(DTM_CosmicRune, x, y, MIX1,MIY1,MIX2,MIY2)) and not (bankscreen.IsOpen())) then
+begin
+exit(5);
+end
+//openbank
+if ((SRL.FindColors(TPA,CTS2(CastleWarsBankColor, 100, 0.01, 0.01), MainScreen.GetBounds) > 0) and not (bankscreen.IsOpen())  and not (findDTM(DTM_SaphireRing, x, y, MIX1,MIY1,MIX2,MIY2))) then
+begin
+exit(3);
+end
+//withdrawbank
+if ((bankscreen.IsOpen()) and not (NeedMoreItems)) then
+begin
+exit(4);
+end
 end;
 
 procedure executeState(State: Integer);
 begin
-  case (State) of
-    0: setupPlayer();
-    1: gameTab(TAB_INV);
-    2: closeInterface();
-    3: fletchHandler();
-    4: antiban();
-    5: openBank();
-    6: bankHandler();
-    7: recoverKnife();
-    8: breakHandlerCustom();
-  end;
-  stats_Commit();
-  progress();
-  sleep(random(150, 200));
+case (State) of
+ 0: breakHandlerCustom();
+ 1 : Login();
+ 2 : antiban();
+ 3 : openbank();
+ 4 : withdrawbank();
+ 5 : EnchantMainRoutine();
+ 6 : LogoutAndTerminate();
+ end
+ sleep(random(100,300));
 end;
 
 begin
-  updater();
-  declarePlayer();
-  initAL();
-  setup();
-  stats_setup('12');
-  stats_check;
-  stats_initVariable('65', 0);
-  repeat
-    executeState(getState());
-  until (false);
+   setup();
+   repeat
+   executeState(getState());
+   until (False);
+   Free();
 end.
